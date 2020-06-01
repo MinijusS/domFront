@@ -1,0 +1,49 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+main {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+input {
+    height: 40px;
+    font-size: 20px;
+    margin-bottom: 20px;
+}
+
+.list-item input {
+    border: none;
+    padding: 10px;
+    font-size: 20px;
+}
+
+.done-text {
+    text-decoration: line-through;
+}
+
+.btn {
+    border-radius: 5px;
+    border: none;
+    padding: 5px 10px;
+    font-size: 16px;
+    margin: 5px;
+}
+
+.delete {
+    background-color: #d63031;
+    color: white;
+}
+
+.done {
+    background-color: #00b894;
+    color: white;
+}
+
+ul li {
+    list-style-type: none;
+}
