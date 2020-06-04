@@ -2,6 +2,7 @@ import { h, Component, mount } from '../vdom';
 import Form from './Form';
 import Article from './Article';
 import Spinner from './Spinner';
+import Modal from './Modal';
 
 export default class App extends Component {
     constructor() {
@@ -10,9 +11,12 @@ export default class App extends Component {
         this.state.articles = [];
         this.getData();
         this.state.isLoading = true;
+        this.state.modal = { isOpen: false, title: '', content: '' };
 
         //Binds
         this.getData = this.getData.bind(this);
+        this.editPost = this.editPost.bind(this);
+        this.updatePost = this.updatePost.bind(this);
         this.newPost = this.newPost.bind(this);
         this.postData = this.postData.bind(this);
         this.deletePost = this.deletePost.bind(this);
@@ -45,14 +49,39 @@ export default class App extends Component {
         this.setState({ articles: data, isLoading: false });
     }
 
-    async deletePost(id) {
-        const response = await fetch(`http://rest.stecenka.lt/api/posts/${id}`, {
+    deletePost(id) {
+        fetch(`http://rest.stecenka.lt/api/posts/${id}`, {
             method: 'DELETE'
         })
-        const data = await response.json();
-        const foundId = this.state.articles.findIndex(article => article.id === id);
-        this.state.articles.splice(foundId, 1);
+            .then(response => response.json())
+            .then(() => {
+                const foundId = this.state.articles.findIndex(article => article.id === id);
+                this.state.articles.splice(foundId, 1);
+                this.setState(this.state);
+            })
+    }
+
+    editPost(obj) {
+        this.state.modal = { isOpen: true, title: obj.title, content: obj.body, id: obj.id};
         this.setState(this.state);
+    }
+
+    updatePost(obj, id) {
+        fetch(`http://rest.stecenka.lt/api/posts/${id}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(obj)
+        })
+            .then(response => response.json())
+            .then(() => {
+                this.state.modal.isOpen = false;
+                const foundId = this.state.articles.findIndex(article => article.id === id);
+                this.state.articles[foundId].title = obj.title;
+                this.state.articles[foundId].body = obj.body;                
+                this.setState(this.state);
+            })
     }
 
     render() {
@@ -62,21 +91,26 @@ export default class App extends Component {
                     title: article.title,
                     body: article.body,
                     id: article.id,
-                    deleteHandler: this.deletePost
+                    deleteHandler: this.deletePost,
+                    editHandler: this.editPost
                 });
         });
 
         if (!this.state.isLoading) {
-            return h('div', {
-                class: 'wrapper'
-            }, h('div', { class: 'top-section' }, h('h1', {}, 'News'), h('i', { class: 'material-icons', click: this.getData }, 'refresh')),
+            if (this.state.modal.isOpen) {
+                return h(Modal, { title: this.state.modal.title, content: this.state.modal.content, handler: this.updatePost, id: this.state.modal.id });
+            } else {
+                return h('div', {
+                    class: 'wrapper'
+                }, h('div', { class: 'top-section' }, h('h1', {}, 'News'), h('i', { class: 'material-icons', click: this.getData }, 'refresh')),
 
-                h('div', { class: 'articles' }, ...articles),
-                h(Form,
-                    {
-                        class: 'form-submit',
-                        handler: this.postData
-                    }));
+                    h('div', { class: 'articles' }, ...articles),
+                    h(Form,
+                        {
+                            class: 'form-submit',
+                            handler: this.postData
+                        }));
+            }
         } else {
             return h('div',
                 {

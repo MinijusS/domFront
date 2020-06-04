@@ -5,10 +5,15 @@ export default class Article extends Component {
     constructor(props) {
         super(props);
         this.deleteHandler = this.deleteHandler.bind(this);
+        this.editHandler = this.editHandler.bind(this);
     }
 
     deleteHandler() {
         this.props.deleteHandler(this.props.id);
+    }
+
+    editHandler() {
+        this.props.editHandler(this.props, this.props.id);        
     }
 
     render() {
@@ -19,11 +24,16 @@ export default class Article extends Component {
             h('div', { class: 'right-side' },
                 h(Button,
                     {
-                        name: 'Delete',
+                        name: '',
                         class: 'btn btn-delete',
                         click: this.deleteHandler
-                    })
-            )
-        )
+                    }, h('i', { class: 'material-icons' }, 'delete')),
+                h(Button,
+                    {
+                        name: '',
+                        class: 'btn btn-edit',
+                        click: this.editHandler
+                    }, h('i', { class: 'material-icons' }, 'edit'))
+            ))
     }
 }
