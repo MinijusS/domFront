@@ -6,11 +6,6 @@ export default class Input extends Component {
     }
 
     render() {
-        return h('input', 
-        {
-            keyup: this.props.keyup, 
-            class: this.props.class,
-            value: this.props.value
-        });
+        return h('input', {class: this.props.class, placeholder: this.props.placeholder, keyup: this.props.handler});
     }
 }

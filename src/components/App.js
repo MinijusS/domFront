@@ -1,66 +1,88 @@
-import { h, Component } from '../vdom';
-import Input from './Input';
-import ListItem from './ListItem';
+import { h, Component, mount } from '../vdom';
+import Form from './Form';
+import Article from './Article';
+import Spinner from './Spinner';
 
 export default class App extends Component {
     constructor() {
         super();
-        this.state.todos = [
-            {
-                name: 'Learn js',
-                done: false
+
+        this.state.articles = [];
+        this.getData();
+        this.state.isLoading = true;
+
+        //Binds
+        this.getData = this.getData.bind(this);
+        this.newPost = this.newPost.bind(this);
+        this.postData = this.postData.bind(this);
+        this.deletePost = this.deletePost.bind(this);
+    }
+
+    newPost(data) {
+        this.state.articles.push(data);
+        this.setState(this.state);
+    }
+
+    postData(data) {
+        fetch('http://rest.stecenka.lt/api/posts', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
             },
-            {
-                name: 'Node',
-                done: false
-            }
-        ];
-        this.handleInput = this.handleInput.bind(this);
-        this.handleDelete = this.handleDelete.bind(this);
-        this.handleDone = this.handleDone.bind(this);
-        this.handleEdit = this.handleEdit.bind(this);
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(result => this.newPost(result))
     }
 
-    handleInput(e) {
-        if (e.keyCode === 13) {
-            this.state.todos.push({name: e.target.value, done: false});
-            this.setState(this.state);
-        }
+    getData() {
+        fetch('http://rest.stecenka.lt/api/posts')
+            .then(response => response.json())
+            .then(data => this.setData(data))
     }
 
-    handleDelete(id) {
-        const updatedTodo = this.state.todos;
-        updatedTodo.splice(id, 1);
-        this.setState(this.state);
+    setData(data) {
+        this.setState({ articles: data, isLoading: false });
     }
 
-    handleDone(id) {
-        this.state.todos[id].done = true;
-        this.setState(this.state);
-    }
-
-    handleEdit(id, value) {
-        this.state.todos[id].name = value;
+    async deletePost(id) {
+        const response = await fetch(`http://rest.stecenka.lt/api/posts/${id}`, {
+            method: 'DELETE'
+        })
+        const data = await response.json();
+        const foundId = this.state.articles.findIndex(article => article.id === id);
+        this.state.articles.splice(foundId, 1);
         this.setState(this.state);
     }
 
     render() {
-        const list = this.state.todos.map((todo, index) => {
-            return h(ListItem,
+        const articles = this.state.articles.map(article => {
+            return h(Article,
                 {
-                    todo: todo.name,
-                    isDone: todo.done,
-                    key: index,
-                    handler: this.handleDelete,
-                    done: this.handleDone,
-                    edit: this.handleEdit
+                    title: article.title,
+                    body: article.body,
+                    id: article.id,
+                    deleteHandler: this.deletePost
                 });
         });
 
-        return h(
-            'main', {},
-            h(Input, { keyup: this.handleInput, value: '', class: 'input' }),
-            h('ul', {}, ...list)
-        );
+        if (!this.state.isLoading) {
+            return h('div', {
+                class: 'wrapper'
+            }, h('div', { class: 'top-section' }, h('h1', {}, 'News'), h('i', { class: 'material-icons', click: this.getData }, 'refresh')),
+
+                h('div', { class: 'articles' }, ...articles),
+                h(Form,
+                    {
+                        class: 'form-submit',
+                        handler: this.postData
+                    }));
+        } else {
+            return h('div',
+                {
+                    class: 'wrapper center'
+                },
+                h(Spinner, { class: 'loader' }));
+        }
     }
 }
